@@ -3,8 +3,8 @@ from decimal import Decimal
 
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
-from.models import Cart, Product, Category, Order, OrderItem # Product モßデルをインポート
-from .forms import ProductForm, SearchForm # フォームのインポート
+from.models import Cart, Product, Category, Order, OrderItem, Review # Product モßデルをインポート
+from .forms import ProductForm, SearchForm, ReviewForm # フォームのインポート
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse  # reverseをインポート
@@ -37,7 +37,25 @@ def product_create(request):
     
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    return render(request, 'product_detail.html', {'product': product})
+    reviews = product.reviews.all()  # 商品に関連するレビューを取得
+
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
+            return redirect('product_detail', product_id=product.id)
+    else:
+        form = ReviewForm()
+
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'form': form,
+    }
+    return render(request, 'product_detail.html', context)
     
 def product_update(request, pk): 
     product = get_object_or_404(Product, pk=pk) 

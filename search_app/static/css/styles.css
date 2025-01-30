@@ -1,0 +1,13 @@
+header {
+    position: sticky; /* ここに注目! */    
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030; /* 他の要素より前面に表示 */
+}
+
+/* 固定ヘッダーの分だけコンテンツを下にずらす */
+body {
+    padding-top: 70px; /* ヘッダーの高さ分を確保 */
+
+}

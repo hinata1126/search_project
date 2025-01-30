@@ -5,6 +5,8 @@ from PIL import Image
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
+from django.conf import settings
+
 
 class Category(models.Model): 
     name = models.CharField(max_length=255)
@@ -68,3 +70,14 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+
+#レビューするために必要
+class Review(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    comment = models.TextField()
+    rating = models.PositiveIntegerField()  # 1～5の評価値
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.product.name} ({self.rating})'
