@@ -45,29 +45,31 @@
     <!-- おすすめ商品セクション -->
     <div class="mt-5">
         <h4 class="fw-bold">おすすめ商品</h4>
-        <div class="row">
+        <div class="row recommend-products overflow-auto">
             {% for recommended_product in recommended_products %}
-            <div class="col-md-3">
-                <div class="card h-100">
-                    {% if recommended_product.image %}
-                        <img src="{{ recommended_product.image.url }}" class="card-img-top" alt="{{ recommended_product.name }}">
-                    {% else %}
-                        <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image available">
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ recommended_product.name }}</h5>
-                        <p class="card-text text-danger fw-bold">
-                            {{ recommended_product.price|floatformat:0|intcomma }}円
-                        </p>
-                        <a href="{% url 'product_detail' recommended_product.id %}" class="btn btn-primary w-100">詳細を見る</a>
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        {% if recommended_product.image %}
+                            <img src="{{ recommended_product.image.url }}" class="card-img-top" alt="{{ recommended_product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image available">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recommended_product.name }}</h5>
+                            <p class="card-text text-danger fw-bold">
+                                {{ recommended_product.price|floatformat:0|intcomma }}円
+                            </p>
+                            <a href="{% url 'product_detail' recommended_product.id %}" class="btn btn-primary w-100">詳細を見る</a>
+                        </div>
                     </div>
                 </div>
-            </div>
             {% empty %}
-            <p class="text-muted">おすすめ商品はありません。</p>
+                <p class="text-muted">おすすめ商品はありません。</p>
             {% endfor %}
         </div>
     </div>
+    
+
 
     <!-- カスタマーレビュー -->
     <div class="mt-5">
@@ -77,8 +79,20 @@
                 {% for review in reviews %}
                     <div class="mb-4">
                         <h6 class="mb-1">{{ review.user.username }}</h6>
+                        <p>
+                            {% for _ in "x"|rjust:review.rating %}
+                                ★
+                            {% endfor %}
+                            ({{ review.rating }}/5)
+                        </p>
                         <p class="text-muted">{{ review.comment }}</p>
-                        <p>評価: {{ review.rating }}/5</p>
+                        {% if review.user == user %}
+                            <!-- 削除ボタンをレビューの下に配置 -->
+                            <form action="{% url 'delete_review' review.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">削除</button>
+                            </form>
+                        {% endif %}
                     </div>
                     <hr>
                 {% endfor %}
@@ -86,19 +100,113 @@
                 <p class="text-muted">レビューはまだありません。</p>
             {% endif %}
         </div>
+    </div>    
 
         <!-- レビュー投稿フォーム -->
         {% if user.is_authenticated %}
-            <form method="POST" class="mt-4">
+        <div class="mt-5 p-4 border bg-white">
+            <h5 class="fw-bold">レビューを投稿する</h5>
+            <form method="POST">
                 {% csrf_token %}
-                <h5 class="fw-bold">レビューを投稿する</h5>
-                {{ form.as_p }}
+                
+                <div class="mb-3">
+                    <label class="form-label">評価:</label><br>
+                    <div class="star-rating">
+                        {% for value, label in form.rating.field.choices reversed %}
+                            <input type="radio" name="{{ form.rating.name }}" value="{{ value }}" id="rating{{ value }}" class="d-none"
+                                   {% if form.rating.value == value %}checked{% endif %}>
+                            <label for="rating{{ value }}" class="star">★</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                
+            
+                <div class="mb-3">
+                    <label for="{{ form.comment.id_for_label }}" class="form-label">コメント:</label>
+                    {{ form.comment }}
+                </div>
+                
                 <button type="submit" class="btn btn-primary">投稿</button>
             </form>
+            
+        </div>
         {% else %}
-            <p class="text-muted mt-4">レビューを投稿するには <a href="{% url 'login' %}">ログイン</a> が必要です。</p>
+        <p class="text-muted mt-4">レビューを投稿するには <a href="{% url 'login' %}">ログイン</a> が必要です。</p>
         {% endif %}
     </div>
+
 </main>
 
+<!-- page-specific CSS -->
+<style>
+    /* 星の評価を右から左へ */
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse; /* 右から左へ */
+        justify-content: flex-start;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* 星のデフォルト色 */
+    .star-rating label {
+        color: gray;
+        transition: color 0.2s ease;
+    }
+
+    /* チェックされた星を金色に */
+    .star-rating input:checked ~ label {
+        color: gold;
+    }
+
+    /* ホバー時の星の色変更 */
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+        color: gold;
+    }
+
+    /* 追加部分: 評価が入力されている星に金色を適用 */
+    .star {
+        color: gray; /* 星のデフォルト色 */
+        transition: color 0.2s ease;
+    }
+
+    .star.filled {
+        color: gold; /* 評価が入っている星は金色 */
+    }
+
+    /* ホバー時の星の色変更 */
+    .star-rating .star:hover {
+        color: gold;
+    }
+
+    .recommend-products {
+    display: flex; /* 商品を横並びにする */
+    overflow-x: auto; /* 横スクロールを有効にする */
+    gap: 15px; /* 商品間の間隔 */
+}
+
+.recommend-products .col-md-3 {
+    flex: 0 0 auto; /* 幅を固定してスクロールできるようにする */
+    width: 250px; /* 商品カードの幅を指定 */
+}
+
+.recommend-products::-webkit-scrollbar {
+    height: 8px; /* 横スクロールバーの高さ */
+}
+
+.recommend-products::-webkit-scrollbar-thumb {
+    background-color: #888; /* スクロールバーの色 */
+    border-radius: 4px;
+}
+
+.recommend-products::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* ホバー時の色 */
+}
+
+
+</style>
+
+<script src="{% static 'js/scripts.js' %}"></script>
 {% endblock %}

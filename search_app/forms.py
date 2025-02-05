@@ -16,10 +16,16 @@ class ProductForm(forms.ModelForm):
 
 #レビューするために必要
 class ReviewForm(forms.ModelForm):
+    RATING_CHOICES = [(i, "★" * i) for i in range(1, 6)]  # 1〜5の星
+    
+    rating = forms.ChoiceField(
+        choices=RATING_CHOICES, 
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'})
+    )
+
     class Meta:
         model = Review
         fields = ['rating', 'comment']
         widgets = {
-            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'class': 'form-control'}),
             'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }

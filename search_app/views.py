@@ -11,8 +11,6 @@ from django.urls import reverse  # reverseをインポート
 from decimal import Decimal
 
 
-
-
 def product_create(request):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
@@ -25,35 +23,42 @@ def product_create(request):
 
     return render(request, 'product_form.html', {'form': form})
 
-# def product_create(request):
-#     if request.method == 'POST':
-#         form = ProductForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('product_list')
-#         else:
-#             form = ProductForm()
-#         return render(request, 'product_form.html', {'form': form})
+def delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+
+    # レビューが現在のユーザーのものであるか確認
+    if review.user == request.user:
+        review.delete()
+
+    # 削除後、元の商品詳細ページにリダイレクト
+    return redirect('product_detail', product_id=review.product.id)
     
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     reviews = product.reviews.all()  # 商品に関連するレビューを取得
 
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.product = product
-            review.user = request.user
-            review.save()
-            return redirect('product_detail', product_id=product.id)
-    else:
-        form = ReviewForm()
+    # おすすめ商品をランダムに4つ取得（現在の商品を除く）
+    recommended_products = Product.objects.exclude(id=product_id).order_by('?')[:4]
+
+    form = None
+    if request.user.is_authenticated:  # ログインしている場合のみフォームを表示
+        if request.method == 'POST':
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                review.save()
+                return redirect('product_detail', product_id=product.id)
+        else:
+            form = ReviewForm()
 
     context = {
         'product': product,
         'reviews': reviews,
         'form': form,
+        'ratings': range(1, 6),  # 1から5までの評価値を渡す
+        'recommended_products': recommended_products,  # おすすめ商品を渡す
     }
     return render(request, 'product_detail.html', context)
     
@@ -236,3 +241,15 @@ def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)  # ログイン中のユーザーの注文を取得
     order_items = order.items.all()  # related_name 'items' を使って関連するOrderItemを取得
     return render(request, 'order_detail.html', {'order': order, 'order_items': order_items})
+
+@login_required
+def delete_order(request, order_id):
+    # 注文を取得
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # 注文削除
+    if request.method == 'POST':
+        order.delete()
+        return redirect('order_list')  # 削除後に注文履歴一覧にリダイレクト
+    
+    return redirect('order_list')  # POSTでない場合は注文履歴一覧にリダイレクト

@@ -25,7 +25,8 @@ urlpatterns = [
     path('order_complete/', views.order_complete, name='order_complete'),  #注文完了ページ
     path('order-history/', views.order_history, name='order_history'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
-
+    path('review/delete/<int:review_id>/', views.delete_review, name='delete_review'),
+    path('order/<int:order_id>/delete/', views.delete_order, name='delete_order'),
 ]
 
 if settings.DEBUG:

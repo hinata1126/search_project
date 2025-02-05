@@ -2,40 +2,38 @@
 {% block title %}商品一覧{% endblock %}
 
 {% block content %}
-<body>
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">商品管理</h1>
-            <!-- 商品リスト -->
-            <ul class="list-group">
-            {% for product in products %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
+<div class="container mt-5">
+    <h1 class="text-center mb-4">商品管理</h1>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="list-group">
+                {% for product in products %}
+                <div class="list-group-item d-flex justify-content-between align-items-center p-3 shadow-sm">
                     <div>
-                        <h5>{{ product.name }}</h5>
-                        <p>{{ product.price }}円</p>
+                        <h5 class="mb-1">{{ product.name }}</h5>
+                        <p class="mb-0 text-danger fw-bold">¥{{ product.price|floatformat:0 }}</p>
                     </div>
-    <dix>
-    <!-- 編集ボタン -->
-        <a href="{% url 'product_update' product.id %}" class="btn btn-primary me-2">編集</a>
-        <!-- 削除ボタン -->
-        <form action="{% url 'product_delete' product.id %}" method="POST" style="display:inline;" onsubmit="return confirm('本当に削除しますか？');">
-        {% csrf_token %}
-            <button type="submit" class="btn btn-danger">削除</button>
-        </form>
-    </dix>
-                </li>
-                    {% empty %}
-                        <li class="list-group-item">商品がありません。</li>
-                    {% endfor %}
-            </ul>
+                    <div class="d-flex gap-2">
+                        <!-- 編集ボタン -->
+                        <a href="{% url 'product_update' product.id %}" class="btn btn-primary btn-sm">編集</a>
+                        <!-- 削除ボタン -->
+                        <form action="{% url 'product_delete' product.id %}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">削除</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-center">商品がありません。</div>
+                {% endfor %}
+            </div>
 
             <!-- 最初の画面に戻るボタン -->
             <div class="mt-4 text-center">
                 <a href="{% url 'search_view' %}" class="btn btn-secondary">最初の画面に戻る</a>
             </div>
+        </div>
     </div>
+</div>
 {% endblock %}
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>

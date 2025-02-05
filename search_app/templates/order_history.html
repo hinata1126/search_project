@@ -32,6 +32,11 @@
                             注文日: {{ order.created_at|date:"Y年m月d日 H:i" }}
                         </p>
                         <a href="{% url 'order_detail' order.id %}" class="btn btn-primary w-100">詳細を見る</a>
+                        <!-- 注文削除ボタン -->
+                        <form action="{% url 'delete_order' order.id %}" method="POST" style="display:inline;" onsubmit="return confirm('本当に削除しますか？');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger mt-2 w-100">注文を削除</button>
+                        </form>
                     </div>
                 </div>
             </div>
